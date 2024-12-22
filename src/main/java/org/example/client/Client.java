@@ -10,8 +10,11 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import org.example.jsonparser.JsonParser;
+import org.example.model.Lobby;
 import org.example.serverConfig.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,6 +24,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public class Client extends Application {
     private static final String SERVER_ADDRESS = ServerConfig.SERVER_ADDRESS.getValue();
@@ -33,6 +39,7 @@ public class Client extends Application {
     private Stage connectStage;
     private Stage waitingStage;
     private Stage gameMenu;
+    private Stage lobbiesStage;
 
     private Label timerLabel;
     private Stage enteringUsernameStage;
@@ -227,6 +234,118 @@ public class Client extends Application {
         enteringPasswordStage.show();
     }
 
+    private void getLobbiesFromMultiplay() {
+        new Thread(() -> {
+            try {
+                output.println("MULTIPLAY");
+
+                String response = input.readLine();
+                if (response.startsWith("MULTIPLAY_ACK_FAIL")) {
+                    Platform.runLater(() -> {
+                        gameMenu.close();
+                        showGameMenu();
+                    });
+                } else if (response.startsWith("MULTIPLAY_ACK_SUCCESS")) {
+                    String json = response.substring(22);
+
+                    Optional<List<Lobby>> optionalLobbies = JsonParser.parseLobbies(json);
+
+                    if (optionalLobbies.isPresent()) {
+                        Platform.runLater(() -> {
+                            gameMenu.close();
+                            showLobbies(optionalLobbies.get());
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            gameMenu.close();
+                            showGameMenu();
+                        });
+                    }
+
+                } else {
+                    Platform.runLater(() -> {
+                        gameMenu.close();
+                        closeConnection();
+                        showStartWindow();
+                    });
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    gameMenu.close();
+                    closeConnection();
+                    showStartWindow();
+                });
+            }
+        }).start();
+
+    }
+
+    private void showLobbies(List<Lobby> lobbies) {
+        lobbiesStage = new Stage();
+        VBox root = new VBox(10);
+        root.setPadding(new Insets(20));
+        root.setAlignment(Pos.CENTER);
+
+        Label titleLabel = new Label("Доступные лобби: ");
+        root.getChildren().add(titleLabel);
+
+        for (Lobby lobby : lobbies) {
+            HBox lobbyBox = createLobbyButton(lobby);
+            root.getChildren().add(lobbyBox);
+        }
+
+        Scene scene = new Scene(root, 1920, 1080);
+        lobbiesStage.setTitle("Rally");
+        lobbiesStage.setScene(scene);
+        lobbiesStage.show();
+    }
+
+    private HBox createLobbyButton(Lobby lobby) {
+        HBox lobbyBox = new HBox(10);
+        lobbyBox.setAlignment(Pos.CENTER_LEFT);
+        lobbyBox.setPadding(new Insets(10));
+
+        Label iconLabel = new Label("\uD83C\uDFAE");
+
+        VBox infoBox = new VBox(5);
+        Label nameLabel = new Label("Название лобби: " + lobby.getNameOfLobby());
+        Label playersLabel = new Label("Количество игроков: " + lobby.getCountOfPlayersInLobby() + "/2");
+        Optional<String> nameOfPlayers = parseNameOfPlayers(lobby);
+        if (nameOfPlayers.isPresent()) {
+            Label nameOfPlayersLabel = new Label(nameOfPlayers.get());
+            infoBox.getChildren().add(nameOfPlayersLabel);
+        }
+        infoBox.getChildren().addAll(nameLabel, playersLabel);
+
+        Button selectButton = new Button("Выбрать");
+
+        selectButton.setOnAction(e -> {
+            sendLobbyIdToServer(lobby.getId());
+        });
+
+        lobbyBox.getChildren().addAll(iconLabel, infoBox, selectButton);
+
+        return lobbyBox;
+    }
+
+    private void sendLobbyIdToServer(int id) {
+    }
+
+    private Optional<String> parseNameOfPlayers(Lobby lobby) {
+        if (Objects.isNull(lobby.getPlayer1()) && Objects.isNull(lobby.getPlayer2())) {
+            return Optional.empty();
+        } else if (Objects.isNull(lobby.getPlayer1())) {
+            String players = "Игроки: " + lobby.getPlayer2();
+            return Optional.of(players);
+        } else if (Objects.isNull(lobby.getPlayer2())) {
+            String players = "Игроки: " + lobby.getPlayer1();
+            return Optional.of(players);
+        } else {
+            String players = "Игроки: " + lobby.getPlayer1() + ", " + lobby.getPlayer2();
+            return Optional.of(players);
+        }
+    }
+
     private void sendPassword(String password) {
         new Thread(() -> {
             try {
@@ -338,6 +457,7 @@ public class Client extends Application {
 
         Button playWithComputer = new Button("Игра с компьютером");
         Button playOnline = new Button("Online режим");
+        playOnline.setOnAction(e -> getLobbiesFromMultiplay());
         Button viewComputerTopList = new Button("Посмотреть топ игроков в игре с компьютером");
         Button viewOnlineTopList = new Button("Посмотреть топ игроков в игре online");
         Button exit = new Button("Выход из игры");
@@ -355,6 +475,7 @@ public class Client extends Application {
         gameMenu.setScene(menuScene);
         gameMenu.show();
     }
+
 
     /**
      * Закрытие соединения
