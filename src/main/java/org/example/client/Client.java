@@ -26,9 +26,10 @@ public class Client extends Application {
     private Socket socket;
     private PrintWriter output;
     private BufferedReader input;
-    private Stage primaryStage;
+    private Stage startStage;
     private Stage connectStage;
     private Stage waitingStage;
+    private Stage gameMenu;
 
     private Label timerLabel;
     private Stage enteringUsernameStage;
@@ -41,7 +42,7 @@ public class Client extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        this.primaryStage = primaryStage;
+        this.startStage = primaryStage;
 
         showStartWindow();
     }
@@ -220,21 +221,24 @@ public class Client extends Application {
 
                 String response = input.readLine();
                 if ("PASS_ACK_SUCCESS".equals(response)) {
-                    Platform.runLater(this::showGameMenu);
+                    Platform.runLater(() -> {
+                        enteringPasswordStage.close();
+                        showGameMenu();
+                    });
                 } else if ("PASS_ACK_FAIL".equals(response)) {
                     Platform.runLater(() -> {
                         showPasswordWindow("Неверный пароль. Попробуйте снова: ");
                     });
                 } else {
                     Platform.runLater(() -> {
-                        enteringUsernameStage.close();
+                        enteringPasswordStage.close();
                         closeConnection();
                         showStartWindow();
                     });
                 }
             } catch (IOException e) {
                 Platform.runLater(() -> {
-                    enteringUsernameStage.close();
+                    enteringPasswordStage.close();
                     closeConnection();
                     showStartWindow();
                 });
@@ -259,16 +263,16 @@ public class Client extends Application {
         root.getChildren().add(connectionButton);
 
         Scene scene = new Scene(root, 1920, 1080);
-        primaryStage.setTitle("Rally");
-        primaryStage.setScene(scene);
-        primaryStage.show();
+        startStage.setTitle("Rally");
+        startStage.setScene(scene);
+        startStage.show();
     }
 
     /**
      * Экран ожидания подключения к серверу ( ждём когда выполнится строчка socket = new Socket(...) )
      */
     private void showConnectWindow() {
-        primaryStage.close();
+        startStage.close();
         connectStage = new Stage();
         VBox waitingRoot = new VBox(10);
         waitingRoot.setPadding(new Insets(20));
@@ -307,17 +311,29 @@ public class Client extends Application {
      * Экран с игровым меню
      */
     private void showGameMenu() {
+        gameMenu = new Stage();
         VBox menuRoot = new VBox(10);
         menuRoot.setPadding(new Insets(20));
         menuRoot.setAlignment(Pos.CENTER);
 
-        Button enterGameButton = new Button("Вход в игру");
-        enterGameButton.setPrefWidth(400);
-        menuRoot.getChildren().add(enterGameButton);
+        Button playWithComputer = new Button("Игра с компьютером");
+        Button playOnline = new Button("Online режим");
+        Button viewComputerTopList = new Button("Посмотреть топ игроков в игре с компьютером");
+        Button viewOnlineTopList = new Button("Посмотреть топ игроков в игре online");
+        Button exit = new Button("Выход из игры");
+
+        playWithComputer.setPrefWidth(400);
+        playOnline.setPrefWidth(400);
+        viewComputerTopList.setPrefWidth(400);
+        viewOnlineTopList.setPrefWidth(400);
+        exit.setPrefWidth(400);
+
+        menuRoot.getChildren().addAll(playOnline, playWithComputer, viewOnlineTopList, viewComputerTopList, exit);
 
         Scene menuScene = new Scene(menuRoot, 1920, 1080);
-        primaryStage.setScene(menuScene);
-        primaryStage.show();
+        gameMenu.setTitle("Rally");
+        gameMenu.setScene(menuScene);
+        gameMenu.show();
     }
 
     /**
