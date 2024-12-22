@@ -1,6 +1,5 @@
 package org.example.client;
 
-import com.sun.org.slf4j.internal.LoggerFactory;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -13,7 +12,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.serverConfig.ServerConfig;
-import sun.security.krb5.internal.PAData;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -33,7 +31,8 @@ public class Client extends Application {
     private Stage waitingStage;
 
     private Label timerLabel;
-    private Stage authStage;
+    private Stage enteringUsernameStage;
+    private Stage enteringPasswordStage;
     private Thread timeThread;
 
     public static void main(String[] args) {
@@ -106,7 +105,11 @@ public class Client extends Application {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                    Platform.runLater(() -> {
+                        waitingStage.close();
+                        closeConnection();
+                        showStartWindow();
+                    });
                 }
             }
 
@@ -126,7 +129,7 @@ public class Client extends Application {
     }
 
     private void showUsernameWindow() {
-        authStage = new Stage();
+        enteringUsernameStage = new Stage();
         VBox authRoot = new VBox(10);
         authRoot.setPadding(new Insets(20));
         authRoot.setAlignment(Pos.CENTER);
@@ -142,29 +145,31 @@ public class Client extends Application {
         authRoot.getChildren().addAll(authLabel, usernameField, submitButton);
 
         Scene authScene = new Scene(authRoot, 1920, 1080);
-        authStage.setTitle("Rally");
-        authStage.setScene(authScene);
-        authStage.show();
+        enteringUsernameStage.setTitle("Rally");
+        enteringUsernameStage.setScene(authScene);
+        enteringUsernameStage.show();
     }
 
     private void sendUsername(String userName) {
         new Thread(() -> {
-
-
             try {
 
                 output.println("USER/" + userName);
 
-
                 String response = input.readLine();
-                System.out.println(response);
                 if ("USER_ACK_CHECK".equals(response)) {
-                    Platform.runLater(() -> showPasswordWindow("Подтвердите пароль: "));
+                    Platform.runLater(() -> {
+                        enteringUsernameStage.close();
+                        showPasswordWindow("Аккаунт с таким никнеймом уже существует. Подтвердите пароль: ");
+                    });
                 } else if ("USER_ACK_CREATE".equals(response)) {
-                    Platform.runLater(() -> showPasswordWindow("Придумайте пароль: "));
+                    Platform.runLater(() -> {
+                        enteringUsernameStage.close();
+                        showPasswordWindow("Вы создаёт новый аккаунт. Придумайте пароль: ");
+                    });
                 } else {
                     Platform.runLater(() -> {
-                        authStage.close();
+                        enteringUsernameStage.close();
                         closeConnection();
                         showStartWindow();
                     });
@@ -173,7 +178,7 @@ public class Client extends Application {
 
             } catch (IOException e) {
                 Platform.runLater(() -> {
-                    authStage.close();
+                    enteringUsernameStage.close();
                     closeConnection();
                     showStartWindow();
                 });
@@ -184,13 +189,13 @@ public class Client extends Application {
         }).start();
     }
 
-    private void showPasswordWindow(String s) {
-        authStage.close();
-        VBox authRoot = new VBox(10);
-        authRoot.setPadding(new Insets(20));
-        authRoot.setAlignment(Pos.CENTER);
+    private void showPasswordWindow(String message) {
+        enteringPasswordStage = new Stage();
+        VBox enteringPasswordRoot = new VBox(10);
+        enteringPasswordRoot.setPadding(new Insets(20));
+        enteringPasswordRoot.setAlignment(Pos.CENTER);
 
-        Label authLabel = new Label(s);
+        Label authLabel = new Label(message);
         PasswordField passwordField = new PasswordField();
         Button submitButton = new Button("Подветрдить");
 
@@ -199,20 +204,22 @@ public class Client extends Application {
             sendPassword(password);
         });
 
-        authRoot.getChildren().addAll(authLabel, passwordField, submitButton);
-        Scene authScene = new Scene(authRoot, 1920, 1080);
+        enteringPasswordRoot.getChildren().addAll(authLabel, passwordField, submitButton);
+        Scene authScene = new Scene(enteringPasswordRoot, 1920, 1080);
 
-        authStage.setScene(authScene);
-        authStage.show();
+        enteringPasswordStage.setScene(authScene);
+        enteringPasswordStage.setTitle("Rally");
+        enteringPasswordStage.show();
     }
 
     private void sendPassword(String password) {
         new Thread(() -> {
             try {
+
                 output.println("PASS/" + password);
 
                 String response = input.readLine();
-                if ("PASS_ACK_SUCESS".equals(response)) {
+                if ("PASS_ACK_SUCCESS".equals(response)) {
                     Platform.runLater(this::showGameMenu);
                 } else if ("PASS_ACK_FAIL".equals(response)) {
                     Platform.runLater(() -> {
@@ -220,13 +227,15 @@ public class Client extends Application {
                     });
                 } else {
                     Platform.runLater(() -> {
-                        authStage.close();
+                        enteringUsernameStage.close();
+                        closeConnection();
                         showStartWindow();
                     });
                 }
             } catch (IOException e) {
                 Platform.runLater(() -> {
-                    authStage.close();
+                    enteringUsernameStage.close();
+                    closeConnection();
                     showStartWindow();
                 });
             }
