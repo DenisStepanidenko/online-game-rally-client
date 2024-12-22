@@ -485,9 +485,14 @@ public class Client extends Application {
             try {
                 socket.close();
                 logger.info("Сокет закрыт.");
+
+                input.close();
+                logger.info("Поток ввода закрыт.");
+
+                output.close();
+                logger.info("Поток вывода закрыт.");
             } catch (IOException e) {
                 logger.error("Произошла ошибка при закрытии сокета. " + e.getMessage());
-                throw new RuntimeException(e);
             }
         }
     }
