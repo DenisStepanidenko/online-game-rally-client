@@ -5,21 +5,18 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import org.example.jsonparser.JsonParser;
 import org.example.model.Lobby;
 import org.example.serverConfig.ServerConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.example.validator.PasswordValidator;
 import org.example.validator.UsernameValidator;
 import org.example.validator.Validator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -45,11 +42,15 @@ public class Client extends Application {
     private Stage waitingStage;
     private Stage gameMenu;
     private Stage lobbiesStage;
+    private Stage waitingConnectPersonInLobbyStage;
+    private Stage readyForStartStage;
+    private Stage readyForOpponentStage;
 
     private Label timerLabel;
     private Stage enteringUsernameStage;
     private Stage enteringPasswordStage;
     private Thread timeThread;
+    private String nameOfOpponent;
 
     public static void main(String[] args) {
         launch(args);
@@ -236,7 +237,7 @@ public class Client extends Application {
         passwordField.setMaxWidth(250);
         Label errorLabel = new Label(); // label для отображения ошибки
         errorLabel.setStyle("-fx-text-fill: red;"); // красный цвет текста ошибки
-        Button submitButton = new Button("Подветрдить");
+        Button submitButton = new Button("Подтвердить");
 
         submitButton.setOnAction(e -> {
             String password = passwordField.getText();
@@ -338,7 +339,13 @@ public class Client extends Application {
             Label nameOfPlayersLabel = new Label(nameOfPlayers.get());
             infoBox.getChildren().add(nameOfPlayersLabel);
         }
-        infoBox.getChildren().addAll(nameLabel, playersLabel);
+        Label startGame;
+        if (lobby.isStartingGame()) {
+            startGame = new Label("Игра идёт");
+        } else {
+            startGame = new Label("Игра не началась");
+        }
+        infoBox.getChildren().addAll(nameLabel, playersLabel, startGame);
 
         Button selectButton = new Button("Выбрать");
 
@@ -351,8 +358,6 @@ public class Client extends Application {
         return lobbyBox;
     }
 
-    private void sendLobbyIdToServer(int id) {
-    }
 
     private Optional<String> parseNameOfPlayers(Lobby lobby) {
         if (Objects.isNull(lobby.getPlayer1()) && Objects.isNull(lobby.getPlayer2())) {
@@ -367,6 +372,236 @@ public class Client extends Application {
             String players = "Игроки: " + lobby.getPlayer1() + ", " + lobby.getPlayer2();
             return Optional.of(players);
         }
+    }
+
+    private void sendLobbyIdToServer(int id) {
+        new Thread(() -> {
+            try {
+                output.println("JOIN_LOBBY_ID/" + id);
+
+                String response = input.readLine();
+                if (response.equals("FULL_LOBBY_ERR") || response.equals("LOBBY_START_GAME")) {
+                    Platform.runLater(() -> {
+                        lobbiesStage.close();
+                        getLobbiesFromMultiplay();
+                    });
+                } else if (response.equals("JOIN_LOBBY_ID_ACK_SUCCESS")) {
+                    Platform.runLater(() -> {
+                        lobbiesStage.close();
+                        showWaitingConnectPersonInLobby(null);
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        lobbiesStage.close();
+                        closeConnection();
+                        showStartWindow();
+                    });
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    lobbiesStage.close();
+                    closeConnection();
+                    showStartWindow();
+                });
+            }
+        }).start();
+    }
+
+    private void showWaitingConnectPersonInLobby(String message) {
+        waitingConnectPersonInLobbyStage = new Stage();
+        waitingConnectPersonInLobbyStage.setTitle("Rally");
+
+        Label messageLabel = new Label("Ожидание подключения игрока...");
+
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setStyle("-fx-progress-color: #0078d7;");
+        VBox vBox = new VBox(messageLabel, progressIndicator);
+
+        if (!Objects.isNull(messageLabel)) {
+            Label info = new Label(message);
+            vBox.getChildren().add(info);
+        }
+        vBox.setPadding(new Insets(20));
+        vBox.setAlignment(Pos.CENTER);
+
+        Scene scene = new Scene(vBox, 1920, 1080);
+
+        waitingConnectPersonInLobbyStage.setScene(scene);
+        waitingConnectPersonInLobbyStage.show();
+
+        waitingConnectPerson();
+    }
+
+    private void waitingConnectPerson() {
+        new Thread(() -> {
+            try {
+                String response = input.readLine();
+
+                if (response.startsWith("PLAYER_JOINED/")) {
+                    String[] parts = response.split("/");
+                    String usernameOfOpponent = parts[1];
+                    this.nameOfOpponent = usernameOfOpponent;
+                    Platform.runLater(() -> {
+                        waitingConnectPersonInLobbyStage.close();
+                        showReadyForStartStage(usernameOfOpponent);
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        waitingConnectPersonInLobbyStage.close();
+                        closeConnection();
+                        showStartWindow();
+                    });
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    waitingConnectPersonInLobbyStage.close();
+                    closeConnection();
+                    showStartWindow();
+                });
+            }
+        }).start();
+    }
+
+    private void showReadyForStartStage(String usernameOfOpponent) {
+        readyForStartStage = new Stage();
+        readyForStartStage.setTitle("Готовность к игре");
+
+
+        Label opponentLabel = new Label("Против вас будет играть: " + usernameOfOpponent);
+        opponentLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #333333;");
+
+
+        Button readyButton = new Button("Готов играть");
+        readyButton.setStyle("-fx-font-size: 14px; -fx-background-color: #0078d7; -fx-text-fill: white;");
+
+        Thread serverListener = new Thread(() -> {
+            try {
+                String response = input.readLine();
+                if (response.equals("AFK_TIMEOUT")) {
+                    Platform.runLater(() -> {
+                        readyForStartStage.close();
+                        getLobbiesFromMultiplay();
+                    });
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    readyForStartStage.close();
+                    closeConnection();
+                    showStartWindow();
+                });
+            }
+        });
+
+
+        readyButton.setOnAction(e -> {
+            if (!Objects.isNull(serverListener) && serverListener.isAlive()) {
+                serverListener.interrupt();
+            }
+            sendReadyStatus();
+        });
+
+
+        VBox vbox = new VBox(opponentLabel, readyButton);
+        vbox.setAlignment(Pos.CENTER);
+        vbox.setPadding(new Insets(20));
+
+
+        Scene scene = new Scene(vbox, 1920, 1080);
+        readyForStartStage.setScene(scene);
+        readyForStartStage.show();
+
+        // откроем на фоне поток, чтобы поймать AFK_TIMEOUT, когда мы не нажали на кнопку READY
+        serverListener.start();
+    }
+
+    private void sendReadyStatus() {
+        new Thread(() -> {
+            output.println("READY");
+
+            Platform.runLater(() -> {
+                readyForStartStage.close();
+                showWaitingForReadeOpponent();
+            });
+
+        }).start();
+    }
+
+    private void showWaitingForReadeOpponent() {
+        readyForOpponentStage = new Stage();
+        readyForOpponentStage.setTitle("Rally");
+
+
+        Label waitingLabel = new Label("Ожидаем подтверждения от игрока: " + this.nameOfOpponent);
+        waitingLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #333333;");
+
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setStyle("-fx-progress-color: #0078d7;");
+
+
+        VBox vbox = new VBox(waitingLabel, progressIndicator);
+        vbox.setAlignment(Pos.CENTER);
+        vbox.setPadding(new Insets(20));
+
+        Scene scene = new Scene(vbox, 1920, 1080);
+        readyForOpponentStage.setScene(scene);
+        readyForOpponentStage.show();
+
+        waitingReadyStatusOfPerson();
+    }
+
+    private void waitingReadyStatusOfPerson() {
+        new Thread(() -> {
+            try {
+                String response = input.readLine();
+
+                if (response.equals("START")) {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        showGame();
+                    });
+                } else if (response.equals("LEFT_JOINED")) {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность");
+                        this.nameOfOpponent = null;
+                    });
+
+                } else {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        closeConnection();
+                        showStartWindow();
+                    });
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    readyForOpponentStage.close();
+                    closeConnection();
+                    showStartWindow();
+                });
+            }
+        }).start();
+    }
+
+    private void showGame() {
+        Stage test = new Stage();
+        test.setTitle("Rally");
+
+
+        Label waitingLabel = new Label("Должна быть игра");
+        waitingLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #333333;");
+
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setStyle("-fx-progress-color: #0078d7;");
+
+
+        VBox vbox = new VBox(waitingLabel, progressIndicator);
+        vbox.setAlignment(Pos.CENTER);
+        vbox.setPadding(new Insets(20));
+
+        Scene scene = new Scene(vbox, 1920, 1080);
+        test.setScene(scene);
+        test.show();
     }
 
     private void sendPassword(String password) {
@@ -506,6 +741,8 @@ public class Client extends Application {
     private void closeConnection() {
         if (socket != null && !socket.isClosed()) {
             try {
+                this.nameOfOpponent = null;
+
                 socket.close();
                 logger.info("Сокет закрыт.");
 

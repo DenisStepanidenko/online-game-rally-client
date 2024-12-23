@@ -20,6 +20,9 @@ public class Lobby {
     @JsonProperty("player2")
     private String player2;
 
+    @JsonProperty("starting_game")
+    private boolean isStartingGame;
+
     @Override
     public String toString() {
         return "Lobby{" +
