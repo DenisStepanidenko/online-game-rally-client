@@ -266,7 +266,9 @@ public class Client extends Application {
                 String response = input.readLine();
                 if (response.startsWith("MULTIPLAY_ACK_FAIL")) {
                     Platform.runLater(() -> {
-                        gameMenu.close();
+                        if(gameMenu.isShowing()) {
+                            gameMenu.close();
+                        }
                         showGameMenu();
                     });
                 } else if (response.startsWith("MULTIPLAY_ACK_SUCCESS")) {
@@ -276,26 +278,34 @@ public class Client extends Application {
 
                     if (optionalLobbies.isPresent()) {
                         Platform.runLater(() -> {
-                            gameMenu.close();
+                            if(gameMenu.isShowing()) {
+                                gameMenu.close();
+                            }
                             showLobbies(optionalLobbies.get());
                         });
                     } else {
                         Platform.runLater(() -> {
-                            gameMenu.close();
+                            if(gameMenu.isShowing()) {
+                                gameMenu.close();
+                            }
                             showGameMenu();
                         });
                     }
 
                 } else {
                     Platform.runLater(() -> {
-                        gameMenu.close();
+                        if(gameMenu.isShowing()) {
+                            gameMenu.close();
+                        }
                         closeConnection();
                         showStartWindow();
                     });
                 }
             } catch (IOException e) {
                 Platform.runLater(() -> {
-                    gameMenu.close();
+                    if(gameMenu.isShowing()) {
+                        gameMenu.close();
+                    }
                     closeConnection();
                     showStartWindow();
                 });
@@ -479,8 +489,8 @@ public class Client extends Application {
                 String response = input.readLine();
                 if (response.equals("AFK_TIMEOUT")) {
                     Platform.runLater(() -> {
-                        readyForStartStage.close();
                         getLobbiesFromMultiplay();
+                        readyForStartStage.close();
                     });
                 }
             } catch (IOException e) {
