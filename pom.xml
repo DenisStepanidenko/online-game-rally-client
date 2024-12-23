@@ -26,6 +26,28 @@
             <version>20</version> <!-- Укажите актуальную версию -->
         </dependency>
 
+
+        <!-- SLF4J API -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.36</version> <!-- Укажите актуальную версию -->
+        </dependency>
+
+        <!-- Logback Classic (реализация SLF4J) -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>1.2.11</version> <!-- Укажите актуальную версию -->
+        </dependency>
+
+        <!-- Logback Core (зависимость для Logback Classic) -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+            <version>1.2.11</version> <!-- Укажите актуальную версию -->
+        </dependency>
+
         <!--Работа с JSON-->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

@@ -15,6 +15,8 @@ import javafx.stage.Stage;
 import org.example.jsonparser.JsonParser;
 import org.example.model.Lobby;
 import org.example.serverConfig.ServerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.example.validator.PasswordValidator;
 import org.example.validator.UsernameValidator;
 import org.example.validator.Validator;
@@ -31,6 +33,7 @@ import java.util.Optional;
 public class Client extends Application {
     private static final String SERVER_ADDRESS = ServerConfig.SERVER_ADDRESS.getValue();
     private static final int SERVER_PORT = Integer.parseInt(ServerConfig.SERVER_PORT.getValue());
+    private final Logger logger = LoggerFactory.getLogger(Client.class);
     private static final Validator usernameValidator = new UsernameValidator();
     private static final Validator passwordValidator = new PasswordValidator();
 
@@ -55,6 +58,7 @@ public class Client extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.startStage = primaryStage;
+        logger.info("Приложение запущено.");
 
         showStartWindow();
     }
@@ -68,6 +72,7 @@ public class Client extends Application {
         new Thread(() -> {
             try {
                 socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+                logger.info("Подключение к серверу по адресу " + socket.getInetAddress() + " установлено.");
                 output = new PrintWriter(socket.getOutputStream(), true);
                 input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -77,14 +82,17 @@ public class Client extends Application {
                 });
 
                 output.println("CONNECT");
+                logger.info("Запрос на подключение (CONNECT) к серверу отправлен.");
 
                 String response = input.readLine();
                 if ("CONNECT_ACK".equals(response)) {
+                    logger.info("Подключение к серверу подтверждено (CONNECT_ACK).");
                     Platform.runLater(() -> {
                         waitingStage.close();
                         startAuthentication();
                     });
                 } else {
+                    logger.info("Подтверждение подключения (CONNECT_ACK) от сервера не получено.");
                     Platform.runLater(() -> {
                         waitingStage.close();
                         closeConnection();
@@ -92,6 +100,7 @@ public class Client extends Application {
                     });
                 }
             } catch (IOException e) {
+                logger.error("Произошла ошибка при подключении к серверу " + e.getMessage());
                 Platform.runLater(() -> {
                     if (waitingStage != null) {
                         waitingStage.close();
@@ -177,19 +186,23 @@ public class Client extends Application {
             try {
 
                 output.println("USER/" + userName);
+                logger.info("Имя пользователя (USER/...) отправлено на сервер.");
 
                 String response = input.readLine();
                 if ("USER_ACK_CHECK".equals(response)) {
+                    logger.info("Подтверждение существования пользователя (USER_ACK_CHECK) получено от сервера.");
                     Platform.runLater(() -> {
                         enteringUsernameStage.close();
                         showPasswordWindow("Аккаунт с таким никнеймом уже существует. Подтвердите пароль: ");
                     });
                 } else if ("USER_ACK_CREATE".equals(response)) {
+                    logger.info("Подтверждение создания пользователя (USER_ACK_CREATE) получено от сервера.");
                     Platform.runLater(() -> {
                         enteringUsernameStage.close();
-                        showPasswordWindow("Вы создаёт новый аккаунт. Придумайте пароль: ");
+                        showPasswordWindow("Вы создаёте новый аккаунт. Придумайте пароль: ");
                     });
                 } else {
+                    logger.info("Подтверждение существования (USER_ACK_CHECK)/создания (USER_ACK_CREATE) пользователя от сервера не получено.");
                     Platform.runLater(() -> {
                         enteringUsernameStage.close();
                         closeConnection();
@@ -199,6 +212,7 @@ public class Client extends Application {
 
 
             } catch (IOException e) {
+                logger.error("Произошла ошибка при отправке имени пользователя на сервер. " + e.getMessage());
                 Platform.runLater(() -> {
                     enteringUsernameStage.close();
                     closeConnection();
@@ -360,18 +374,23 @@ public class Client extends Application {
             try {
 
                 output.println("PASS/" + password);
+                logger.info("Пароль пользователя (PASS/...) отправлен на сервер.");
 
                 String response = input.readLine();
                 if ("PASS_ACK_SUCCESS".equals(response)) {
+                    logger.info("Подтверждение пароля (PASS_ACK_SUCCESS) получено от сервера.");
                     Platform.runLater(() -> {
                         enteringPasswordStage.close();
                         showGameMenu();
                     });
                 } else if ("PASS_ACK_FAIL".equals(response)) {
+                    logger.info("Подтверждение пароля (PASS_ACK_FAIL) получено от сервера: Неверный пароль.");
                     Platform.runLater(() -> {
+                        enteringPasswordStage.close();
                         showPasswordWindow("Неверный пароль. Попробуйте снова: ");
                     });
                 } else {
+                    logger.info("Подтверждение верности (PASS_ACK_SUCCESS)/неверности (PASS_ACK_FAIL) пароля от сервера не получено.");
                     Platform.runLater(() -> {
                         enteringPasswordStage.close();
                         closeConnection();
@@ -379,6 +398,7 @@ public class Client extends Application {
                     });
                 }
             } catch (IOException e) {
+                logger.error("Произошла ошибка при отправке пароля. " + e.getMessage());
                 Platform.runLater(() -> {
                     enteringPasswordStage.close();
                     closeConnection();
@@ -487,8 +507,15 @@ public class Client extends Application {
         if (socket != null && !socket.isClosed()) {
             try {
                 socket.close();
+                logger.info("Сокет закрыт.");
+
+                input.close();
+                logger.info("Поток ввода закрыт.");
+
+                output.close();
+                logger.info("Поток вывода закрыт.");
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                logger.error("Произошла ошибка при закрытии сокета. " + e.getMessage());
             }
         }
     }
