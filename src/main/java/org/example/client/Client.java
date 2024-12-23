@@ -1,6 +1,5 @@
 package org.example.client;
 
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -18,6 +17,9 @@ import org.example.model.Lobby;
 import org.example.serverConfig.ServerConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.example.validator.PasswordValidator;
+import org.example.validator.UsernameValidator;
+import org.example.validator.Validator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -32,6 +34,9 @@ public class Client extends Application {
     private static final String SERVER_ADDRESS = ServerConfig.SERVER_ADDRESS.getValue();
     private static final int SERVER_PORT = Integer.parseInt(ServerConfig.SERVER_PORT.getValue());
     private final Logger logger = LoggerFactory.getLogger(Client.class);
+    private static final Validator usernameValidator = new UsernameValidator();
+    private static final Validator passwordValidator = new PasswordValidator();
+
     private Socket socket;
     private PrintWriter output;
     private BufferedReader input;
@@ -153,13 +158,22 @@ public class Client extends Application {
 
         Label authLabel = new Label("Введите имя пользователя");
         TextField usernameField = new TextField();
+        usernameField.setMaxWidth(250);
+        Label errorLabel = new Label(); // label для отображения ошибки
+        errorLabel.setStyle("-fx-text-fill: red;"); // красный цвет текста ошибки
         Button submitButton = new Button("Подтвердить");
         submitButton.setOnAction(e -> {
             String userName = usernameField.getText();
-            sendUsername(userName);
+            if (usernameValidator.validate(userName)) {
+                sendUsername(userName);
+            } else {
+                // вывод в графике подсказки с требованиями к userName
+                errorLabel.setText("Имя пользователя должно содержать от 5 до 20 символов, среди которых обязательно должны быть:\n - заглавная или строчная буква\n - цифра\nРазрешены только буквы латинского алфавита.");
+            }
+
         });
 
-        authRoot.getChildren().addAll(authLabel, usernameField, submitButton);
+        authRoot.getChildren().addAll(authLabel, usernameField, errorLabel, submitButton);
 
         Scene authScene = new Scene(authRoot, 1920, 1080);
         enteringUsernameStage.setTitle("Rally");
@@ -219,14 +233,23 @@ public class Client extends Application {
 
         Label authLabel = new Label(message);
         PasswordField passwordField = new PasswordField();
+        passwordField.setMaxWidth(250);
+        Label errorLabel = new Label(); // label для отображения ошибки
+        errorLabel.setStyle("-fx-text-fill: red;"); // красный цвет текста ошибки
         Button submitButton = new Button("Подветрдить");
 
         submitButton.setOnAction(e -> {
             String password = passwordField.getText();
-            sendPassword(password);
+            if (passwordValidator.validate(password)) {
+                sendPassword(password);
+            } else if (errorLabel.getText().isEmpty()) {
+                // Вывод в графике подсказки с требованиями к паролю пользователя
+                errorLabel.setText("Пароль должен содержать от 5 до 20 символов, среди которых обязательно должны быть:\n - заглавная и строчная буква\n - цифра\n - спецсимвол\nРазрешены только буквы латинского алфавита.");
+            }
+
         });
 
-        enteringPasswordRoot.getChildren().addAll(authLabel, passwordField, submitButton);
+        enteringPasswordRoot.getChildren().addAll(authLabel, passwordField, errorLabel, submitButton);
         Scene authScene = new Scene(enteringPasswordRoot, 1920, 1080);
 
         enteringPasswordStage.setScene(authScene);
