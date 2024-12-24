@@ -486,33 +486,7 @@ public class Client extends Application {
         Button readyButton = new Button("Готов играть");
         readyButton.setStyle("-fx-font-size: 14px; -fx-background-color: #0078d7; -fx-text-fill: white;");
 
-        Thread serverListener = new Thread(() -> {
-            try {
-                if (readyButtonFlag) {
-                    return;
-                }
-                String response = input.readLine();
-                if (response.equals("AFK_TIMEOUT")) {
-                    Platform.runLater(() -> {
-                        getLobbiesFromMultiplay();
-                        readyForStartStage.close();
-                    });
-                }
-            } catch (IOException e) {
-                Platform.runLater(() -> {
-                    readyForStartStage.close();
-                    closeConnection();
-                    showStartWindow();
-                });
-            }
-        });
-
-
         readyButton.setOnAction(e -> {
-            this.readyButtonFlag = true;
-            if (!Objects.isNull(serverListener) && serverListener.isAlive()) {
-                serverListener.interrupt();
-            }
             sendReadyStatus();
         });
 
@@ -526,18 +500,43 @@ public class Client extends Application {
         readyForStartStage.setScene(scene);
         readyForStartStage.show();
 
-        // откроем на фоне поток, чтобы поймать AFK_TIMEOUT, когда мы не нажали на кнопку READY
-        serverListener.start();
     }
 
     private void sendReadyStatus() {
         new Thread(() -> {
-            output.println("READY");
-
             Platform.runLater(() -> {
                 readyForStartStage.close();
                 showWaitingForReadeOpponent();
             });
+
+            output.println("READY");
+            try {
+                String response = input.readLine();
+                if (response.equals("AFK_TIMEOUT")) {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        getLobbiesFromMultiplay();
+                    });
+
+                } else if (response.equals("LEFT_JOINED")) {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность к игре");
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        closeConnection();
+                        showStartWindow();
+                    });
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    readyForOpponentStage.close();
+                    closeConnection();
+                    showStartWindow();
+                });
+            }
 
         }).start();
     }
@@ -563,59 +562,9 @@ public class Client extends Application {
         readyForOpponentStage.setScene(scene);
         readyForOpponentStage.show();
 
-        waitingReadyStatusOfPerson();
+
     }
 
-    private void waitingReadyStatusOfPerson() {
-        new Thread(() -> {
-            try {
-
-                String response = input.readLine();
-
-                logger.info("пришёл ответ от сервера " + response);
-                if (response.equals("START")) {
-                    Platform.runLater(() -> {
-                        readyForOpponentStage.close();
-                        showGame();
-                    });
-                } else if (response.equals("LEFT_JOINED")) {
-                    Platform.runLater(() -> {
-                        readyForOpponentStage.close();
-                        showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность");
-                        this.nameOfOpponent = null;
-                    });
-
-                } else if (response.equals("OK")) {
-                    response = input.readLine();
-                    if (response.equals("START")) {
-                        Platform.runLater(() -> {
-                            readyForOpponentStage.close();
-                            showGame();
-                        });
-                    } else if (response.equals("LEFT_JOINED")) {
-                        Platform.runLater(() -> {
-                            readyForOpponentStage.close();
-                            showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность");
-                            this.nameOfOpponent = null;
-                        });
-
-                    }
-                } else {
-                    Platform.runLater(() -> {
-                        readyForOpponentStage.close();
-                        closeConnection();
-                        showStartWindow();
-                    });
-                }
-            } catch (IOException e) {
-                Platform.runLater(() -> {
-                    readyForOpponentStage.close();
-                    closeConnection();
-                    showStartWindow();
-                });
-            }
-        }).start();
-    }
 
     private void showGame() {
         Stage test = new Stage();
