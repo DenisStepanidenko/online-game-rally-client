@@ -525,6 +525,11 @@ public class Client extends Application {
                         showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность к игре");
                         readyForOpponentStage.close();
                     });
+                } else if (response.equals("START")) {
+                    Platform.runLater(() -> {
+                        readyForOpponentStage.close();
+                        showGame();
+                    });
                 } else {
                     Platform.runLater(() -> {
                         readyForOpponentStage.close();
