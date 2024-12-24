@@ -264,6 +264,7 @@ public class Client extends Application {
                 output.println("MULTIPLAY");
 
                 String response = input.readLine();
+                logger.info("Получено сообщение " + response + " от сервера " + socket.getInetAddress());
                 if (response.startsWith("MULTIPLAY_ACK_FAIL")) {
                     Platform.runLater(() -> {
                         if (gameMenu.isShowing()) {
@@ -512,6 +513,7 @@ public class Client extends Application {
             output.println("READY");
             try {
                 String response = input.readLine();
+                logger.info("Получено сообщение " + response + " от сервера " + socket.getInetAddress());
                 if (response.equals("AFK_TIMEOUT")) {
                     Platform.runLater(() -> {
                         getLobbiesFromMultiplay();

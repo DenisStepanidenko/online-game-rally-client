@@ -15,15 +15,20 @@
     </properties>
 
     <dependencies>
+        <!-- JavaFX 8 Controls -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>20</version> <!-- Укажите актуальную версию -->
+            <version>11</version>
+
         </dependency>
+
+        <!-- JavaFX 8 FXML -->
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>20</version> <!-- Укажите актуальную версию -->
+            <version>11</version>
+
         </dependency>
 
 
