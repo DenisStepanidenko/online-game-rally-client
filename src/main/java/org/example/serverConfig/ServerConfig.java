@@ -4,7 +4,7 @@ package org.example.serverConfig;
  * Класс с данными для подключения к серверу
  */
 public enum ServerConfig {
-    SERVER_ADDRESS("192.168.1.49"),
+    SERVER_ADDRESS("localhost"),
     SERVER_PORT("8082");
 
     private String value;
