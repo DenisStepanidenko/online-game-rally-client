@@ -514,14 +514,14 @@ public class Client extends Application {
                 String response = input.readLine();
                 if (response.equals("AFK_TIMEOUT")) {
                     Platform.runLater(() -> {
-                        readyForOpponentStage.close();
                         getLobbiesFromMultiplay();
+                        readyForOpponentStage.close();
                     });
 
                 } else if (response.equals("LEFT_JOINED")) {
                     Platform.runLater(() -> {
-                        readyForOpponentStage.close();
                         showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность к игре");
+                        readyForOpponentStage.close();
                     });
                 } else {
                     Platform.runLater(() -> {
