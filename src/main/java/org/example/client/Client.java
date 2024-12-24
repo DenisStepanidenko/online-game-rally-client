@@ -266,7 +266,7 @@ public class Client extends Application {
                 String response = input.readLine();
                 if (response.startsWith("MULTIPLAY_ACK_FAIL")) {
                     Platform.runLater(() -> {
-                        if(gameMenu.isShowing()) {
+                        if (gameMenu.isShowing()) {
                             gameMenu.close();
                         }
                         showGameMenu();
@@ -278,14 +278,14 @@ public class Client extends Application {
 
                     if (optionalLobbies.isPresent()) {
                         Platform.runLater(() -> {
-                            if(gameMenu.isShowing()) {
+                            if (gameMenu.isShowing()) {
                                 gameMenu.close();
                             }
                             showLobbies(optionalLobbies.get());
                         });
                     } else {
                         Platform.runLater(() -> {
-                            if(gameMenu.isShowing()) {
+                            if (gameMenu.isShowing()) {
                                 gameMenu.close();
                             }
                             showGameMenu();
@@ -294,7 +294,7 @@ public class Client extends Application {
 
                 } else {
                     Platform.runLater(() -> {
-                        if(gameMenu.isShowing()) {
+                        if (gameMenu.isShowing()) {
                             gameMenu.close();
                         }
                         closeConnection();
@@ -303,7 +303,7 @@ public class Client extends Application {
                 }
             } catch (IOException e) {
                 Platform.runLater(() -> {
-                    if(gameMenu.isShowing()) {
+                    if (gameMenu.isShowing()) {
                         gameMenu.close();
                     }
                     closeConnection();
@@ -472,6 +472,8 @@ public class Client extends Application {
         }).start();
     }
 
+    private boolean readyButtonFlag = false;
+
     private void showReadyForStartStage(String usernameOfOpponent) {
         readyForStartStage = new Stage();
         readyForStartStage.setTitle("Готовность к игре");
@@ -486,6 +488,9 @@ public class Client extends Application {
 
         Thread serverListener = new Thread(() -> {
             try {
+                if (readyButtonFlag) {
+                    return;
+                }
                 String response = input.readLine();
                 if (response.equals("AFK_TIMEOUT")) {
                     Platform.runLater(() -> {
@@ -504,6 +509,7 @@ public class Client extends Application {
 
 
         readyButton.setOnAction(e -> {
+            this.readyButtonFlag = true;
             if (!Objects.isNull(serverListener) && serverListener.isAlive()) {
                 serverListener.interrupt();
             }
@@ -552,6 +558,7 @@ public class Client extends Application {
         vbox.setAlignment(Pos.CENTER);
         vbox.setPadding(new Insets(20));
 
+
         Scene scene = new Scene(vbox, 1920, 1080);
         readyForOpponentStage.setScene(scene);
         readyForOpponentStage.show();
@@ -562,8 +569,10 @@ public class Client extends Application {
     private void waitingReadyStatusOfPerson() {
         new Thread(() -> {
             try {
+
                 String response = input.readLine();
 
+                logger.info("пришёл ответ от сервера " + response);
                 if (response.equals("START")) {
                     Platform.runLater(() -> {
                         readyForOpponentStage.close();
@@ -576,6 +585,21 @@ public class Client extends Application {
                         this.nameOfOpponent = null;
                     });
 
+                } else if (response.equals("OK")) {
+                    response = input.readLine();
+                    if (response.equals("START")) {
+                        Platform.runLater(() -> {
+                            readyForOpponentStage.close();
+                            showGame();
+                        });
+                    } else if (response.equals("LEFT_JOINED")) {
+                        Platform.runLater(() -> {
+                            readyForOpponentStage.close();
+                            showWaitingConnectPersonInLobby("Игрок " + this.nameOfOpponent + " не подтвердил готовность");
+                            this.nameOfOpponent = null;
+                        });
+
+                    }
                 } else {
                     Platform.runLater(() -> {
                         readyForOpponentStage.close();
