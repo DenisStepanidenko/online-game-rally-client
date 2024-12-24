@@ -42,6 +42,7 @@ public class Client extends Application {
     private Stage waitingStage;
     private Stage gameMenu;
     private Stage lobbiesStage;
+    private String username;
     private Stage waitingConnectPersonInLobbyStage;
     private Stage readyForStartStage;
     private Stage readyForOpponentStage;
@@ -64,6 +65,11 @@ public class Client extends Application {
         showStartWindow();
     }
 
+    private void resetUsername() {
+        if (username != null) {
+            username = null;
+        }
+    }
 
     private void connectToServer() {
         showConnectWindow();
@@ -192,15 +198,17 @@ public class Client extends Application {
                 String response = input.readLine();
                 if ("USER_ACK_CHECK".equals(response)) {
                     logger.info("Подтверждение существования пользователя (USER_ACK_CHECK) получено от сервера.");
+                    username = userName;
                     Platform.runLater(() -> {
                         enteringUsernameStage.close();
-                        showPasswordWindow("Аккаунт с таким никнеймом уже существует. Подтвердите пароль: ");
+                        showPasswordWindow("Аккаунт с таким никнеймом уже существует. Подтвердите пароль: ", false);
                     });
                 } else if ("USER_ACK_CREATE".equals(response)) {
                     logger.info("Подтверждение создания пользователя (USER_ACK_CREATE) получено от сервера.");
+                    username = userName;
                     Platform.runLater(() -> {
                         enteringUsernameStage.close();
-                        showPasswordWindow("Вы создаёте новый аккаунт. Придумайте пароль: ");
+                        showPasswordWindow("Вы создаёте новый аккаунт. Придумайте пароль: ", true);
                     });
                 } else {
                     logger.info("Подтверждение существования (USER_ACK_CHECK)/создания (USER_ACK_CREATE) пользователя от сервера не получено.");
@@ -226,7 +234,7 @@ public class Client extends Application {
         }).start();
     }
 
-    private void showPasswordWindow(String message) {
+    private void showPasswordWindow(String message, boolean isNewUser) {
         enteringPasswordStage = new Stage();
         VBox enteringPasswordRoot = new VBox(10);
         enteringPasswordRoot.setPadding(new Insets(20));
@@ -241,7 +249,7 @@ public class Client extends Application {
 
         submitButton.setOnAction(e -> {
             String password = passwordField.getText();
-            if (passwordValidator.validate(password)) {
+            if (!isNewUser | passwordValidator.validate(password)) {
                 sendPassword(password);
             } else if (errorLabel.getText().isEmpty()) {
                 // Вывод в графике подсказки с требованиями к паролю пользователя
@@ -612,10 +620,13 @@ public class Client extends Application {
                     logger.info("Подтверждение пароля (PASS_ACK_FAIL) получено от сервера: Неверный пароль.");
                     Platform.runLater(() -> {
                         enteringPasswordStage.close();
-                        showPasswordWindow("Неверный пароль. Попробуйте снова: ");
+                        showPasswordWindow("Неверный пароль. Попробуйте снова: ", false);
                     });
                 } else {
                     logger.info("Подтверждение верности (PASS_ACK_SUCCESS)/неверности (PASS_ACK_FAIL) пароля от сервера не получено.");
+
+                    resetUsername();
+
                     Platform.runLater(() -> {
                         enteringPasswordStage.close();
                         closeConnection();
@@ -624,6 +635,9 @@ public class Client extends Application {
                 }
             } catch (IOException e) {
                 logger.error("Произошла ошибка при отправке пароля. " + e.getMessage());
+
+                resetUsername();
+
                 Platform.runLater(() -> {
                     enteringPasswordStage.close();
                     closeConnection();
@@ -703,6 +717,11 @@ public class Client extends Application {
         menuRoot.setPadding(new Insets(20));
         menuRoot.setAlignment(Pos.CENTER);
 
+        if (username != null) {
+            Label greetUser = new Label("Приветствуем, " + username);
+            menuRoot.getChildren().add(greetUser);
+        }
+
         Button playWithComputer = new Button("Игра с компьютером");
         Button playOnline = new Button("Online режим");
         playOnline.setOnAction(e -> getLobbiesFromMultiplay());
@@ -731,6 +750,8 @@ public class Client extends Application {
     private void closeConnection() {
         if (socket != null && !socket.isClosed()) {
             try {
+                resetUsername();
+
                 this.nameOfOpponent = null;
 
                 socket.close();
@@ -742,6 +763,7 @@ public class Client extends Application {
                 output.close();
                 logger.info("Поток вывода закрыт.");
             } catch (IOException e) {
+                resetUsername();
                 logger.error("Произошла ошибка при закрытии сокета. " + e.getMessage());
             }
         }
