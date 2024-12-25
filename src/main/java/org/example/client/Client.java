@@ -1,14 +1,22 @@
 package org.example.client;
 
+import javafx.animation.Animation;
+import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.example.jsonparser.JsonParser;
 import org.example.model.Lobby;
 import org.example.serverConfig.ServerConfig;
@@ -574,24 +582,139 @@ public class Client extends Application {
 
 
     private void showGame() {
-        Stage test = new Stage();
-        test.setTitle("Rally");
+        Stage gameStage = new Stage();
+        gameStage.setTitle("Rally - Игра");
 
+        // Основной контейнер для игрового поля
+        Pane gameRoot = new Pane();
+        gameRoot.setPrefSize(800, 600);
 
-        Label waitingLabel = new Label("Должна быть игра");
-        waitingLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #333333;");
+        // Загрузка изображений
+        Image carImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("src/main/java/org/example/images/car.jpg")));
+        Image roadImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("src/main/java/org/example/images/road.png")));
+        Image backgroundImage = new Image(Objects.requireNonNull(getClass().getResourceAsStream("src/main/java/org/example/images/background.jpg")));
 
-        ProgressIndicator progressIndicator = new ProgressIndicator();
-        progressIndicator.setStyle("-fx-progress-color: #0078d7;");
+        // Создание фона
+        ImageView background = new ImageView(backgroundImage);
+        background.setFitWidth(800);
+        background.setFitHeight(600);
 
+        // Создание дороги
+        ImageView road = new ImageView(roadImage);
+        road.setFitWidth(800);
+        road.setFitHeight(200);
+        road.setY(400);
 
-        VBox vbox = new VBox(waitingLabel, progressIndicator);
-        vbox.setAlignment(Pos.CENTER);
-        vbox.setPadding(new Insets(20));
+        // Создание машинки
+        ImageView car = new ImageView(carImage);
+        car.setFitWidth(50);
+        car.setFitHeight(100);
+        car.setX(375); // Начальная позиция по центру
+        car.setY(450);
 
-        Scene scene = new Scene(vbox, 1920, 1080);
-        test.setScene(scene);
-        test.show();
+        // Добавление элементов на сцену
+        gameRoot.getChildren().addAll(background, road, car);
+
+        // Сцена
+        Scene gameScene = new Scene(gameRoot);
+        gameStage.setScene(gameScene);
+        gameStage.show();
+
+        // Обработка нажатий клавиш
+        gameScene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case LEFT:
+                    if (car.getX() > 50) {
+                        car.setX(car.getX() - 50); // Движение влево
+                    }
+                    output.println("MOVE_LEFT");
+                    break;
+                case RIGHT:
+                    if (car.getX() < 700) {
+                        car.setX(car.getX() + 50); // Движение вправо
+                    }
+                    output.println("MOVE_RIGHT");
+                    break;
+            }
+        });
+
+        // Анимация движения дороги
+        TranslateTransition roadAnimation = new TranslateTransition(Duration.seconds(2), road);
+        roadAnimation.setFromY(400);
+        roadAnimation.setToY(600);
+        roadAnimation.setCycleCount(Animation.INDEFINITE);
+        roadAnimation.setInterpolator(Interpolator.LINEAR);
+        roadAnimation.play();
+
+        // Запуск потока для получения обновлений от сервера
+        new Thread(() -> {
+            try {
+                while (true) {
+                    String response = input.readLine();
+                    if (response == null) {
+                        break;
+                    }
+
+                    if (response.startsWith("UPDATE_FIELD/")) {
+                        String[] parts = response.split("/");
+                        String field = parts[1];
+                        int position = Integer.parseInt(parts[2]);
+
+                        Platform.runLater(() -> {
+                            // Обновление позиции машинки
+                            car.setX(375 + (position - 1) * 50);
+                        });
+                    } else if (response.startsWith("COLLISION")) {
+                        Platform.runLater(() -> {
+                            // Анимация столкновения
+                            FadeTransition fade = new FadeTransition(Duration.seconds(0.5), car);
+                            fade.setFromValue(1.0);
+                            fade.setToValue(0.5);
+                            fade.setCycleCount(2);
+                            fade.setAutoReverse(true);
+                            fade.play();
+                        });
+                    } else if (response.startsWith("WIN/")) {
+                        String[] parts = response.split("/");
+                        long yourTime = Long.parseLong(parts[1]);
+                        long opponentTime = Long.parseLong(parts[2]);
+
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Победа");
+                            alert.setHeaderText("Вы выиграли!");
+                            alert.setContentText("Ваше время: " + yourTime + " мс\nВремя противника: " + opponentTime + " мс");
+                            alert.showAndWait();
+                            gameStage.close();
+                        });
+                        break;
+                    } else if (response.startsWith("LOSE/")) {
+                        String[] parts = response.split("/");
+                        long yourTime = Long.parseLong(parts[1]);
+                        long opponentTime = Long.parseLong(parts[2]);
+
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                            alert.setTitle("Поражение");
+                            alert.setHeaderText("Вы проиграли!");
+                            alert.setContentText("Ваше время: " + yourTime + " мс\nВремя противника: " + opponentTime + " мс");
+                            alert.showAndWait();
+                            gameStage.close();
+                        });
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Ошибка");
+                    alert.setHeaderText("Соединение с сервером потеряно");
+                    alert.setContentText("Попробуйте подключиться снова.");
+                    alert.showAndWait();
+                    gameStage.close();
+                });
+            }
+        }).start();
     }
 
     private void sendPassword(String password) {
