@@ -3,6 +3,10 @@ package org.example.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 
+
+/**
+ * Класс лобби для парсинга ответа сервера
+ */
 @Getter
 public class Lobby {
 
