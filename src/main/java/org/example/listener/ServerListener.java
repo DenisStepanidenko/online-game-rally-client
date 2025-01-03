@@ -12,6 +12,10 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Objects;
 
+
+/**
+ * Обработчик и отправитель сообщений серверу
+ */
 public class ServerListener implements Runnable {
     private Logger logger = LoggerFactory.getLogger(ServerListener.class);
     private BufferedReader input;

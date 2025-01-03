@@ -379,38 +379,38 @@ public class Client extends Application {
      */
     private void showNotification(String message, Color color) {
         logger.info("Отображение уведомления с сообщением " + message);
-        // Создаем новый Stage для уведомления
-        Stage notificationStage = new Stage();
-        notificationStage.initStyle(StageStyle.TRANSPARENT); // Прозрачное окно
-        notificationStage.initModality(Modality.APPLICATION_MODAL); // Блокирует взаимодействие с другими окнами
-        notificationStage.setAlwaysOnTop(true); // Всегда поверх других окон
 
-        // Создаем Label для отображения сообщения
+        Stage notificationStage = new Stage();
+        notificationStage.initStyle(StageStyle.TRANSPARENT);
+        notificationStage.initModality(Modality.APPLICATION_MODAL);
+        notificationStage.setAlwaysOnTop(true);
+
+
         Label label = new Label(message);
         label.setTextFill(color);
 
-        // Создаем кнопку "OK"
+
         Button okButton = new Button("OK");
         okButton.setOnAction(event -> notificationStage.close()); // Закрываем окно при нажатии
 
-        // Создаем контейнер для элементов
+
         VBox vbox = new VBox(10, label, okButton);
         vbox.setAlignment(Pos.CENTER);
         vbox.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-border-color: black; -fx-border-width: 2;");
 
-        // Создаем сцену и добавляем контейнер
+
         Scene scene = new Scene(vbox);
-        scene.setFill(Color.TRANSPARENT); // Прозрачный фон сцены
+        scene.setFill(Color.TRANSPARENT);
         notificationStage.setScene(scene);
 
-        // Показываем уведомление
+
         notificationStage.show();
 
         // Закрываем уведомление через 5 секунд, если пользователь не нажал "OK"
         new Thread(() -> {
             try {
-                Thread.sleep(5000); // Ждем 5 секунд
-                Platform.runLater(notificationStage::close); // Закрываем окно в UI потоке
+                Thread.sleep(5000);
+                Platform.runLater(notificationStage::close);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -476,6 +476,9 @@ public class Client extends Application {
      */
     public void handleServerError() {
         showNotification("Произошла ошибка при работе сервера", Color.RED);
+        if (Objects.nonNull(nameOfOpponent)) {
+            nameOfOpponent = null;
+        }
         showStartWindow();
     }
 
