@@ -418,19 +418,6 @@ public class Client extends Application {
     }
 
     /**
-     * Метод для преобразования Color в строку RGBA
-     */
-    private String toRgbaString(Color color) {
-        return String.format(
-                "rgba(%d, %d, %d, %.2f)",
-                (int) (color.getRed() * 255),
-                (int) (color.getGreen() * 255),
-                (int) (color.getBlue() * 255),
-                color.getOpacity()
-        );
-    }
-
-    /**
      * Окно с ожиданием подключения пользователя в лобби
      */
     private void showWaitingConnectPersonInLobby() {
