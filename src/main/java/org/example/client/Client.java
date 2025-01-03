@@ -10,7 +10,9 @@ import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.example.jsonparser.JsonParser;
 import org.example.listener.ServerListener;
@@ -376,31 +378,43 @@ public class Client extends Application {
      * Метод для отображения уведомлений
      */
     private void showNotification(String message, Color color) {
+        logger.info("Отображение уведомления с сообщением " + message);
+        // Создаем новый Stage для уведомления
+        Stage notificationStage = new Stage();
+        notificationStage.initStyle(StageStyle.TRANSPARENT); // Прозрачное окно
+        notificationStage.initModality(Modality.APPLICATION_MODAL); // Блокирует взаимодействие с другими окнами
+        notificationStage.setAlwaysOnTop(true); // Всегда поверх других окон
 
+        // Создаем Label для отображения сообщения
+        Label label = new Label(message);
+        label.setTextFill(color);
 
+        // Создаем кнопку "OK"
+        Button okButton = new Button("OK");
+        okButton.setOnAction(event -> notificationStage.close()); // Закрываем окно при нажатии
 
-        Label notificationLabel = new Label(message);
-        notificationLabel.setStyle(
-                "-fx-background-color: " + toRgbaString(color) + ";" +
-                        "-fx-text-fill: white;" +
-                        "-fx-padding: 10px;" +
-                        "-fx-background-radius: 5px;"
-        );
+        // Создаем контейнер для элементов
+        VBox vbox = new VBox(10, label, okButton);
+        vbox.setAlignment(Pos.CENTER);
+        vbox.setStyle("-fx-background-color: white; -fx-padding: 20; -fx-border-color: black; -fx-border-width: 2;");
 
+        // Создаем сцену и добавляем контейнер
+        Scene scene = new Scene(vbox);
+        scene.setFill(Color.TRANSPARENT); // Прозрачный фон сцены
+        notificationStage.setScene(scene);
 
-        root.getChildren().add(notificationLabel);
-        notificationLabel.toFront();
+        // Показываем уведомление
+        notificationStage.show();
 
-        notificationLabel.setTranslateX((root.getWidth() - notificationLabel.getWidth()) / 2);
-        notificationLabel.setTranslateY(root.getHeight() - 50);
-
-
-        PauseTransition pause = new PauseTransition(Duration.seconds(3));
-        pause.setOnFinished(event -> {
-            // Убираем уведомление после завершения задержки
-            root.getChildren().remove(notificationLabel);
-        });
-        pause.play();
+        // Закрываем уведомление через 5 секунд, если пользователь не нажал "OK"
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000); // Ждем 5 секунд
+                Platform.runLater(notificationStage::close); // Закрываем окно в UI потоке
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }).start();
     }
 
     /**
