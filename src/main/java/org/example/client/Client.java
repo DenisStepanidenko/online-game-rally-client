@@ -14,6 +14,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
+import org.example.game.GameScreen;
 import org.example.jsonparser.JsonParser;
 import org.example.listener.ServerListener;
 import org.example.model.GameState;
@@ -202,8 +203,19 @@ public class Client extends Application {
 
             Optional<GameState> gameState = JsonParser.parseGameState(json);
 
-            if(gameState.isPresent()){
+            if (gameState.isPresent()) {
                 logger.info("Стартовое состояние игры успешно распарсилось");
+
+                // Получаем игровое поле
+                int[][] gameField = gameState.get().getGameField();
+
+                // Создаем экран игры
+                GameScreen gameScreen = new GameScreen(gameField);
+
+                // Устанавливаем сцену игры
+                Platform.runLater(() -> primaryStage.setScene(gameScreen.getScene()));
+
+
             }
         }
     }
