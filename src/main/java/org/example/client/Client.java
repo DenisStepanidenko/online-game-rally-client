@@ -16,6 +16,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.example.jsonparser.JsonParser;
 import org.example.listener.ServerListener;
+import org.example.model.GameState;
 import org.example.model.Lobby;
 import org.example.serverConfig.ServerConfig;
 import org.example.validator.PasswordValidator;
@@ -196,6 +197,14 @@ public class Client extends Application {
             this.nameOfOpponent = null;
             showNotification("Вы не подтвердили готовность к игре в течении 30 секунд", Color.RED);
             serverListener.sendMessage("MULTIPLAY");
+        } else if (response.startsWith("START")) {
+            String json = response.substring(6);
+
+            Optional<GameState> gameState = JsonParser.parseGameState(json);
+
+            if(gameState.isPresent()){
+                logger.info("Стартовое состояние игры успешно распарсилось");
+            }
         }
     }
 
