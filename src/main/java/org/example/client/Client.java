@@ -17,6 +17,8 @@ import org.example.jsonparser.JsonParser;
 import org.example.listener.ServerListener;
 import org.example.model.GameState;
 import org.example.model.Lobby;
+import org.example.model.TopScoresByTime;
+import org.example.model.TopScoresByWins;
 import org.example.serverConfig.ServerConfig;
 import org.example.validator.PasswordValidator;
 import org.example.validator.UsernameValidator;
@@ -216,7 +218,61 @@ public class Client extends Application {
             primaryStage.setScene(primaryScene);
             String[] parts = response.split("/");
             showEndGame(parts);
+        } else if (response.startsWith("MULTILPLAY_TOP_SCORES_LIST_BY_WINS")) {
+            String json = response.substring(35);
+
+            Optional<List<TopScoresByWins>> optionalTopScoresByWins = JsonParser.parseTopScoresByWins(json);
+
+            if (optionalTopScoresByWins.isPresent()) {
+                List<TopScoresByWins> topScoresByWins = optionalTopScoresByWins.get();
+
+                showTopScoresByWins(topScoresByWins);
+            }
+        } else if (response.startsWith("MULTILPLAY_TOP_SCORES_LIST_BY_TIME")) {
+            String json = response.substring(35);
+
+            Optional<List<TopScoresByTime>> optionalTopScoresByTimes = JsonParser.parseTopScoresByTime(json);
+
+            if (optionalTopScoresByTimes.isPresent()) {
+                List<TopScoresByTime> topScoresByTimes = optionalTopScoresByTimes.get();
+
+                showTopScoreByTime(topScoresByTimes);
+            }
         }
+    }
+
+    private void showTopScoreByTime(List<TopScoresByTime> topScoresByTimes) {
+        logger.info("Отрисовка топ листа по времени");
+        root.getChildren().clear();
+
+        Label typeOfScore = new Label("Время (в секундах)");
+
+        ListView<String> listView = new ListView<>();
+        Button back = new Button("Назад");
+        back.setOnAction(e -> showGameMenu());
+
+        for (TopScoresByTime score : topScoresByTimes) {
+            listView.getItems().add(score.getUsername() + ": " + score.getBestTime());
+        }
+
+        root.getChildren().addAll(listView, typeOfScore, back);
+    }
+
+    private void showTopScoresByWins(List<TopScoresByWins> topScoresByWins) {
+        logger.info("Отрисовка топ листа по победам");
+        root.getChildren().clear();
+
+        Label typeOfScore = new Label("Победы");
+
+        ListView<String> listView = new ListView<>();
+        Button back = new Button("Назад");
+        back.setOnAction(e -> showGameMenu());
+
+        for (TopScoresByWins score : topScoresByWins) {
+            listView.getItems().add(score.getUsername() + ": " + score.getWins());
+        }
+
+        root.getChildren().addAll(listView, typeOfScore, back);
     }
 
     /**
@@ -331,10 +387,18 @@ public class Client extends Application {
         String style = "-fx-alignment: center; -fx-padding: 10px;";
 
         Button playWithComputer = new Button("Игра с компьютером");
+
         Button playOnline = new Button("Online режим");
         playOnline.setOnAction(e -> serverListener.sendMessage("MULTIPLAY"));
+
         Button viewComputerTopList = new Button("Посмотреть топ игроков в игре с компьютером");
-        Button viewOnlineTopList = new Button("Посмотреть топ игроков в игре online");
+
+        Button viewOnlineTopListWins = new Button("Посмотреть топ игроков online по количеству побед");
+        viewOnlineTopListWins.setOnAction(e -> serverListener.sendMessage("MULTILPLAY_TOP_SCORES_LIST_BY_WINS"));
+
+        Button viewOnlineTopListTime = new Button("Посмотреть топ игроков online по лучшему времени");
+        viewOnlineTopListTime.setOnAction(e -> serverListener.sendMessage("MULTILPLAY_TOP_SCORES_LIST_BY_TIME"));
+
         Button exit = new Button("Выход из игры");
 
         playWithComputer.setPrefWidth(400);
@@ -343,13 +407,14 @@ public class Client extends Application {
         playOnline.setStyle(style);
         viewComputerTopList.setPrefWidth(400);
         viewComputerTopList.setStyle(style);
-        viewOnlineTopList.setPrefWidth(400);
-        viewOnlineTopList.setStyle(style);
+        viewOnlineTopListWins.setPrefWidth(400);
+        viewOnlineTopListWins.setStyle(style);
         exit.setPrefWidth(400);
         exit.setStyle(style);
+        viewOnlineTopListTime.setPrefWidth(400);
+        viewOnlineTopListTime.setStyle(style);
 
-
-        root.getChildren().addAll(playOnline, playWithComputer, viewOnlineTopList, viewComputerTopList, exit);
+        root.getChildren().addAll(playOnline, playWithComputer, viewOnlineTopListWins, viewOnlineTopListTime, viewComputerTopList, exit);
     }
 
     /**
