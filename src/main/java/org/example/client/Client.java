@@ -426,8 +426,10 @@ public class Client extends Application {
 
         Label titleLabel = new Label("Доступные лобби: ");
         Button refreshButton = new Button("Обновить");
+        Button back = new Button("Назад");
+        back.setOnAction(e -> showGameMenu());
         refreshButton.setOnAction(e -> serverListener.sendMessage("MULTIPLAY"));
-        root.getChildren().addAll(titleLabel, refreshButton);
+        root.getChildren().addAll(titleLabel, refreshButton, back);
 
 
         for (Lobby lobby : lobbies) {
