@@ -73,6 +73,8 @@ public class Client extends Application {
      */
     private ServerListener serverListener;
 
+    private Scene primaryScene;
+
     /**
      * Имя противника в игре
      */
@@ -95,6 +97,7 @@ public class Client extends Application {
         primaryStage.show();
 
         logger.info("Приложение запущено.");
+        this.primaryScene = scene;
         showStartWindow();
     }
 
@@ -210,6 +213,7 @@ public class Client extends Application {
 
             }
         } else if (response.startsWith("WIN") || response.startsWith("LOSE") || response.startsWith("DRAW")) {
+            primaryStage.setScene(primaryScene);
             String[] parts = response.split("/");
             showEndGame(parts);
         }
@@ -221,7 +225,7 @@ public class Client extends Application {
     private void showEndGame(String[] parts) {
         logger.info("Отрисовка конца игры");
         root.getChildren().clear();
-        
+
         String resultOfGame;
         if (parts[0].equals("WIN")) {
             resultOfGame = "Вы победили.";

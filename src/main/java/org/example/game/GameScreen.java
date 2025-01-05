@@ -4,6 +4,7 @@ import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.StackPane;
 import lombok.Getter;
@@ -59,6 +60,8 @@ public class GameScreen {
                         serverListener.sendMessage("FINISH/" + finishTime);
 
                         root.getChildren().clear();
+                        GraphicsContext gc = canvas.getGraphicsContext2D();
+                        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
                     }
                 }
             }
