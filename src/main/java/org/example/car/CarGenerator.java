@@ -8,16 +8,20 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
+
+/**
+ * Отрисовка машинки
+ */
 public class CarGenerator extends Application {
 
-    private static final int CELL_SIZE = 50; // Размер клетки (и машинки)
+    private static final int CELL_SIZE = 50;
 
     @Override
     public void start(Stage primaryStage) {
         Canvas canvas = new Canvas(CELL_SIZE, CELL_SIZE);
         GraphicsContext gc = canvas.getGraphicsContext2D();
 
-        // Отрисовка машинки
+
         drawCar(gc);
 
         Group root = new Group(canvas);

@@ -1,6 +1,5 @@
 package org.example.client;
 
-import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
@@ -13,7 +12,6 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Duration;
 import org.example.game.GameScreen;
 import org.example.jsonparser.JsonParser;
 import org.example.listener.ServerListener;
@@ -26,15 +24,12 @@ import org.example.validator.Validator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Properties;
+
 
 public class Client extends Application {
 
@@ -206,18 +201,53 @@ public class Client extends Application {
             if (gameState.isPresent()) {
                 logger.info("Стартовое состояние игры успешно распарсилось");
 
-                // Получаем игровое поле
                 int[][] gameField = gameState.get().getGameField();
 
-                // Создаем экран игры
-                GameScreen gameScreen = new GameScreen(gameField);
+                GameScreen gameScreen = new GameScreen(gameField, serverListener);
 
-                // Устанавливаем сцену игры
                 Platform.runLater(() -> primaryStage.setScene(gameScreen.getScene()));
 
 
             }
+        } else if (response.startsWith("WIN") || response.startsWith("LOSE") || response.startsWith("DRAW")) {
+            String[] parts = response.split("/");
+            showEndGame(parts);
         }
+    }
+
+    /**
+     * Окно с результатом игры
+     */
+    private void showEndGame(String[] parts) {
+        logger.info("Отрисовка конца игры");
+        root.getChildren().clear();
+        
+        String resultOfGame;
+        if (parts[0].equals("WIN")) {
+            resultOfGame = "Вы победили.";
+        } else if (parts[0].equals("LOSE")) {
+            resultOfGame = "Вы проиграли.";
+        } else {
+            resultOfGame = "Ничья.";
+        }
+
+        Label resultLabel = new Label(resultOfGame);
+        Label yourTime = new Label("Ваше время: " + parts[1]);
+
+        String timeOfOpponent;
+        if (parts[2].equals("NO")) {
+            timeOfOpponent = "Оппонент " + nameOfOpponent + " ещё не проехал трассу.";
+        } else {
+            timeOfOpponent = "Время " + nameOfOpponent + " " + parts[2];
+        }
+        Label timeOfOpponentLabel = new Label(timeOfOpponent);
+        nameOfOpponent = null;
+
+        Button backToLobby = new Button("Вернуться в список лобби");
+
+        backToLobby.setOnAction(e -> serverListener.sendMessage("MULTIPLAY"));
+
+        root.getChildren().addAll(resultLabel, yourTime, timeOfOpponentLabel, backToLobby);
     }
 
     /**

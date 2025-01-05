@@ -4,6 +4,10 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
 
+
+/**
+ * Отрисовка машинки и игрового поля
+ */
 public class GameRenderer {
     private static final int CELL_SIZE = 50; // Размер клетки в пикселях
     private final Canvas canvas;
@@ -15,7 +19,7 @@ public class GameRenderer {
     }
 
     public void renderGameField(int[][] gameField) {
-        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight()); // Очистка холста
+        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
 
         for (int y = 0; y < gameField.length; y++) {
             for (int x = 0; x < gameField[y].length; x++) {
@@ -34,23 +38,23 @@ public class GameRenderer {
 
     public void renderCar(int x, int y) {
         // Отрисовка машинки
-        gc.save(); // Сохраняем текущие настройки GraphicsContext
-        gc.translate(x * CELL_SIZE, y * CELL_SIZE); // Перемещаем начало координат
-        drawCar(gc); // Рисуем машинку
-        gc.restore(); // Восстанавливаем настройки GraphicsContext
+        gc.save();
+        gc.translate(x * CELL_SIZE, y * CELL_SIZE);
+        drawCar(gc);
+        gc.restore();
     }
 
     private void drawCar(GraphicsContext gc) {
-        // Кузов машинки (прямоугольник)
+
         gc.setFill(Color.BLUE);
         gc.fillRect(10, 10, 30, 20);
 
-        // Окна машинки (два маленьких прямоугольника)
+
         gc.setFill(Color.LIGHTBLUE);
         gc.fillRect(15, 12, 8, 6); // Левое окно
         gc.fillRect(27, 12, 8, 6); // Правое окно
 
-        // Колёса машинки (два круга)
+
         gc.setFill(Color.BLACK);
         gc.fillOval(12, 25, 8, 8); // Левое колесо
         gc.fillOval(30, 25, 8, 8); // Правое колесо

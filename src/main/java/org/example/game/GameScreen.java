@@ -7,29 +7,39 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.StackPane;
 import lombok.Getter;
+import org.example.listener.ServerListener;
 
+
+/**
+ * Игровой цикл
+ */
 @Getter
 public class GameScreen {
     private final Canvas canvas;
     private final GameRenderer gameRenderer;
     private final GameController gameController;
     private boolean isGameOver = false;
+    private long startTime;
+    private ServerListener serverListener;
 
-    public GameScreen(int[][] gameField) {
-        this.canvas = new Canvas(1920, 1080); // Размер холста (1920x1080)
+    public GameScreen(int[][] gameField, ServerListener serverListener) {
+        this.canvas = new Canvas(1920, 1080);
         this.gameRenderer = new GameRenderer(canvas);
         this.gameController = new GameController(gameField);
+        this.serverListener = serverListener;
 
         // Отрисовка начального состояния
         gameRenderer.renderGameField(gameController.getVisibleGameField());
         gameRenderer.renderCar(gameController.getCarX(), gameController.getCarY());
+
+        startTime = System.currentTimeMillis();
     }
 
     public Scene getScene() {
         StackPane root = new StackPane(canvas);
         Scene scene = new Scene(root);
 
-        // Обработка нажатий клавиш
+
         scene.setOnKeyPressed(gameController::handleKeyPress);
 
         // Игровой цикл
@@ -45,10 +55,15 @@ public class GameScreen {
                     if (gameController.isGameOver()) {
                         isGameOver = true;
 
+                        long finishTime = System.currentTimeMillis() - startTime;
+                        serverListener.sendMessage("FINISH/" + finishTime);
+
+                        root.getChildren().clear();
                     }
                 }
             }
         }.start();
+
 
         return scene;
     }

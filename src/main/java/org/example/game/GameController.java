@@ -3,6 +3,10 @@ package org.example.game;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 
+
+/**
+ * Управление игрой
+ */
 public class GameController {
     private int carX = 0;
     private int carY = 0;
@@ -19,27 +23,26 @@ public class GameController {
     }
 
     public void handleKeyPress(KeyEvent event) {
-        if (isGameOver) return; // Если игра завершена, управление отключено
+        if (isGameOver) return;
 
         KeyCode keyCode = event.getCode();
         int newX = carX;
         int newY = carY;
 
-        // Определение новой позиции машинки
+
         if (keyCode == KeyCode.LEFT) {
             newX--;
         } else if (keyCode == KeyCode.RIGHT) {
             newX++;
         }
 
-        System.out.println("Y = " + (currentRow) + ", X = " + newX);
-        // Проверка на выход за границы поля и столкновение с препятствием
+
         if (isValidMove(newX, newY)) {
             carX = newX;
             carY = newY;
 
             if(gameField[currentRow + carY][carX] == 1){
-                speed = 0.2; // Замедление
+                speed = 0.2;
                 slowdownTimer = System.currentTimeMillis() + SLOWDOWN_DURATION;
             }
         }
@@ -56,23 +59,23 @@ public class GameController {
         long currentTime = System.currentTimeMillis();
 
         if(gameField[currentRow + carY][carX] == 1){
-            speed = 0.2; // Замедление
+            speed = 0.2;
             slowdownTimer = System.currentTimeMillis() + SLOWDOWN_DURATION;
         }
 
-        // Обновление позиции машинки и поля в зависимости от скорости
+
         if (currentTime - lastUpdateTime > 1000 / speed) {
-            currentRow++; // Прокручиваем поле вверх
+            currentRow++;
 
             lastUpdateTime = currentTime;
         }
 
-        // Проверка, закончилось ли замедление
+
         if (currentTime > slowdownTimer) {
             speed = 1.0;
         }
 
-        // Проверка на финиш
+
         if (currentRow + carY >= gameField.length) {
             isGameOver = true;
         }
