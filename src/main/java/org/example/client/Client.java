@@ -82,7 +82,7 @@ public class Client extends Application {
      */
     private String nameOfOpponent;
 
-    private String username = null;
+    private String username;
 
     public static void main(String[] args) {
         launch(args);
