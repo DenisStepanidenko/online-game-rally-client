@@ -160,11 +160,11 @@ public class Client extends Application {
         if ("CONNECT_ACK".equals(response)) {
             startAuthentication();
         } else if ("USER_ACK_CREATE".equals(response)) {
-            showPasswordWindow("Вы создаёте новый аккаунт. Придумайте пароль.");
+            showPasswordWindow("Вы создаёте новый аккаунт. Придумайте пароль.", true);
         } else if ("USER_ACK_CHECK".equals(response)) {
-            showPasswordWindow("Аккаунт с таким никнеймом уже существует. Подтвердите пароль: ");
+            showPasswordWindow("Аккаунт с таким никнеймом уже существует. Подтвердите пароль: ", false);
         } else if ("PASS_ACK_FAIL".equals(response)) {
-            showPasswordWindow("Неверный пароль. Попробуйте снова: ");
+            showPasswordWindow("Неверный пароль. Попробуйте снова: ", false);
         } else if ("PASS_ACK_SUCCESS".equals(response)) {
             showGameMenu();
         } else if (response.startsWith("MULTIPLAY_ACK_SUCCESS")) {
@@ -350,7 +350,7 @@ public class Client extends Application {
     /**
      * Ввод пользователем пароля
      */
-    private void showPasswordWindow(String message) {
+    private void showPasswordWindow(String message, boolean isNewUser) {
         logger.info("Отрисовка экрана с вводом пароля");
         root.getChildren().clear();
 
@@ -364,8 +364,8 @@ public class Client extends Application {
         submitButton.setOnAction(e -> {
             String password = passwordField.getText();
 
-            // валидация пароля (только если аккаунт создаёт впервые)
-            if (passwordValidator.validate(password)) {
+            // валидация пароля (только если аккаунт создаётся впервые)
+            if ((isNewUser & passwordValidator.validate(password) || !(isNewUser))) {
                 serverListener.sendMessage("PASS/" + password);
             } else if (errorLabel.getText().isEmpty()) {
                 // Вывод в графике подсказки с требованиями к паролю пользователя
