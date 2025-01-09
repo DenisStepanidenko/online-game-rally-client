@@ -82,6 +82,8 @@ public class Client extends Application {
      */
     private String nameOfOpponent;
 
+    private String username;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -336,6 +338,7 @@ public class Client extends Application {
 
             // валидация имени пользователя
             if (usernameValidator.validate(userName)) {
+                username = userName;
                 serverListener.sendMessage("USER/" + userName);
             } else {
                 // вывод в графике подсказки с требованиями к userName
@@ -396,6 +399,11 @@ public class Client extends Application {
         root.getChildren().clear();
 
         String style = "-fx-alignment: center; -fx-padding: 10px;";
+
+        if (Objects.nonNull(username)) {
+            Label greetUser = new Label("Приветствуем, " + username);
+            root.getChildren().add(greetUser);
+        }
 
         Button playWithComputer = new Button("Игра с компьютером");
 
@@ -612,8 +620,19 @@ public class Client extends Application {
         if (Objects.nonNull(nameOfOpponent)) {
             nameOfOpponent = null;
         }
+
+        resetUsername();
+
         showStartWindow();
     }
 
+    /**
+     * Сброс поля username
+     */
+    private void resetUsername() {
+        if (Objects.nonNull(username)) {
+            username = null;
+        }
+    }
 
 }
