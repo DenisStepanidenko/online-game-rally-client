@@ -384,11 +384,12 @@ public class Client extends Application {
 
         Button returnButton = new Button("Назад");
         returnButton.setOnAction(e -> {
-//            resetUsername();
+            resetUsername();
             serverListener.sendMessage("RETURN_FROM_PASSWORD");
+            showUsernameWindow();
         });
 
-        root.getChildren().addAll(authLabel, passwordField, errorLabel, submitButton);
+        root.getChildren().addAll(authLabel, passwordField, errorLabel, submitButton, returnButton);
     }
 
     /**
