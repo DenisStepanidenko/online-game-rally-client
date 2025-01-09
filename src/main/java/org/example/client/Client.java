@@ -344,7 +344,12 @@ public class Client extends Application {
 
         });
 
-        root.getChildren().addAll(authLabel, usernameField, errorLabel, submitButton);
+        Button returnButton = new Button("Назад");
+        returnButton.setOnAction(e -> {
+            showStartWindow();
+        });
+
+        root.getChildren().addAll(authLabel, usernameField, errorLabel, submitButton, returnButton);
     }
 
     /**
@@ -372,6 +377,12 @@ public class Client extends Application {
                 errorLabel.setText("Пароль должен содержать от 5 до 20 символов, среди которых обязательно должны быть:\n - заглавная и строчная буква\n - цифра\n - спецсимвол\nРазрешены только буквы латинского алфавита.");
             }
 
+        });
+
+        Button returnButton = new Button("Назад");
+        returnButton.setOnAction(e -> {
+//            resetUsername();
+            serverListener.sendMessage("RETURN_FROM_PASSWORD");
         });
 
         root.getChildren().addAll(authLabel, passwordField, errorLabel, submitButton);
