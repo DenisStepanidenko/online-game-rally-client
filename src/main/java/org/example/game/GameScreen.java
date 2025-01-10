@@ -19,9 +19,10 @@ public class GameScreen {
     private final Canvas canvas;
     private final GameRenderer gameRenderer;
     private final GameController gameController;
-    private boolean isGameOver = false;
+    public boolean isGameOver = false;
     private long startTime;
     private ServerListener serverListener;
+    private GameScreen gameScreen;
 
     public GameScreen(int[][] gameField, ServerListener serverListener) {
         this.canvas = new Canvas(1920, 1080);

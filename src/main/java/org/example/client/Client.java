@@ -84,6 +84,8 @@ public class Client extends Application {
 
     private String username;
 
+    private GameScreen gameScreen;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -109,6 +111,12 @@ public class Client extends Application {
      * Начальный экран, доступна кнопка подключиться
      */
     private void showStartWindow() {
+        if (Objects.nonNull(gameScreen)) {
+            gameScreen.isGameOver = true;
+            primaryStage.setScene(primaryScene);
+            this.gameScreen = null;
+        }
+
         logger.info("Началась отрисовка начального экрана");
         root.getChildren().clear();
 
@@ -213,7 +221,7 @@ public class Client extends Application {
                 int[][] gameField = gameState.get().getGameField();
 
                 GameScreen gameScreen = new GameScreen(gameField, serverListener);
-
+                this.gameScreen = gameScreen;
                 Platform.runLater(() -> primaryStage.setScene(gameScreen.getScene()));
 
 
