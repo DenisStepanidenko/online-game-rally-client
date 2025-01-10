@@ -555,11 +555,16 @@ public class Client extends Application {
         root.getChildren().clear();
 
         Label messageLabel = new Label("Ожидание подключения игрока...");
+        Button backButton = new Button("Назад");
+        backButton.setOnAction(e -> {
+            serverListener.sendMessage("EXIT_WAITING");
+            serverListener.sendMessage("MULTIPLAY");
+        });
 
         ProgressIndicator progressIndicator = new ProgressIndicator();
         progressIndicator.setStyle("-fx-progress-color: #0078d7;");
 
-        root.getChildren().addAll(messageLabel, progressIndicator);
+        root.getChildren().addAll(messageLabel, progressIndicator, backButton);
     }
 
     /**
@@ -574,6 +579,12 @@ public class Client extends Application {
 
 
         Button readyButton = new Button("Готов играть (нужно подтвердить готовность в течении 30 секунд.");
+        Button backButton = new Button("Не готов (вернуться назад в список лобби)");
+        backButton.setOnAction(e -> {
+            serverListener.sendMessage("NOT_READY");
+            serverListener.sendMessage("MULTIPLAY");
+        });
+
         readyButton.setStyle("-fx-font-size: 14px; -fx-background-color: #0078d7; -fx-text-fill: white;");
 
         readyButton.setOnAction(e -> {
@@ -581,7 +592,7 @@ public class Client extends Application {
             showWaitingForReadyOpponent();
         });
 
-        root.getChildren().addAll(opponentLabel, readyButton);
+        root.getChildren().addAll(opponentLabel, readyButton, backButton);
     }
 
 
