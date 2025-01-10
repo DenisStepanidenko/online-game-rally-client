@@ -113,11 +113,13 @@ public class Client extends Application {
         root.getChildren().clear();
 
         Button connectionButton = new Button("Подключиться");
+        Button exit = new Button("Выйти");
+        exit.setOnAction(e -> Platform.exit());
         connectionButton.setPrefWidth(400);
         connectionButton.setAlignment(Pos.CENTER);
         connectionButton.setOnAction(e -> connectToServer());
 
-        root.getChildren().add(connectionButton);
+        root.getChildren().addAll(connectionButton, exit);
     }
 
     /**
@@ -240,6 +242,8 @@ public class Client extends Application {
 
                 showTopScoreByTime(topScoresByTimes);
             }
+        } else if (response.equals("DISCONNECT_ACK")) {
+            showStartWindow();
         }
     }
 
@@ -406,12 +410,8 @@ public class Client extends Application {
             root.getChildren().add(greetUser);
         }
 
-        Button playWithComputer = new Button("Игра с компьютером");
-
         Button playOnline = new Button("Online режим");
         playOnline.setOnAction(e -> serverListener.sendMessage("MULTIPLAY"));
-
-        Button viewComputerTopList = new Button("Посмотреть топ игроков в игре с компьютером");
 
         Button viewOnlineTopListWins = new Button("Посмотреть топ игроков online по количеству побед");
         viewOnlineTopListWins.setOnAction(e -> serverListener.sendMessage("MULTILPLAY_TOP_SCORES_LIST_BY_WINS"));
@@ -420,13 +420,13 @@ public class Client extends Application {
         viewOnlineTopListTime.setOnAction(e -> serverListener.sendMessage("MULTILPLAY_TOP_SCORES_LIST_BY_TIME"));
 
         Button exit = new Button("Выход из игры");
+        exit.setOnAction(e -> {
+            serverListener.sendMessage("DISCONNECT");
+            showStartWindow();
+        });
 
-        playWithComputer.setPrefWidth(400);
-        playWithComputer.setStyle(style);
         playOnline.setPrefWidth(400);
         playOnline.setStyle(style);
-        viewComputerTopList.setPrefWidth(400);
-        viewComputerTopList.setStyle(style);
         viewOnlineTopListWins.setPrefWidth(400);
         viewOnlineTopListWins.setStyle(style);
         exit.setPrefWidth(400);
@@ -434,7 +434,7 @@ public class Client extends Application {
         viewOnlineTopListTime.setPrefWidth(400);
         viewOnlineTopListTime.setStyle(style);
 
-        root.getChildren().addAll(playOnline, playWithComputer, viewOnlineTopListWins, viewOnlineTopListTime, viewComputerTopList, exit);
+        root.getChildren().addAll(playOnline, viewOnlineTopListWins, viewOnlineTopListTime, exit);
     }
 
     /**

@@ -39,13 +39,14 @@ public class ServerListener implements Runnable {
     }
 
 
-
     @Override
     public void run() {
         try {
             while (true) {
                 String response = input.readLine();
-                logger.info("Получено сообщение " + response + " от сервера " +  socket.getInetAddress());
+                logger.info("Получено сообщение " + response + " от сервера " + socket.getInetAddress());
+
+
 
                 if (Objects.isNull(response)) {
                     closeConnection();
@@ -53,6 +54,10 @@ public class ServerListener implements Runnable {
                     break;
                 } else {
                     Platform.runLater(() -> client.handleServerResponse(response));
+                    if(response.equals("DISCONNECT_ACK")){
+                        closeConnection();
+                        break;
+                    }
                 }
             }
         } catch (IOException ex) {
@@ -65,7 +70,7 @@ public class ServerListener implements Runnable {
     public void sendMessage(String message) {
         if (Objects.nonNull(output)) {
             output.println(message);
-            logger.info("Отправлено сообщение " + message + " серверу " +  socket.getInetAddress());
+            logger.info("Отправлено сообщение " + message + " серверу " + socket.getInetAddress());
         } else {
             logger.info("Попытка отправить сообщение, когда поток вывода не инициализирован");
             Platform.runLater(client::handleServerError);
@@ -73,7 +78,7 @@ public class ServerListener implements Runnable {
         }
     }
 
-    private void closeConnection() {
+    public void closeConnection() {
         if (Objects.nonNull(socket) && !socket.isClosed()) {
             try {
                 socket.close();

@@ -26,7 +26,7 @@ public class GameScreen {
     public GameScreen(int[][] gameField, ServerListener serverListener) {
         this.canvas = new Canvas(1920, 1080);
         this.gameRenderer = new GameRenderer(canvas);
-        this.gameController = new GameController(gameField);
+        this.gameController = new GameController(gameField, serverListener);
         this.serverListener = serverListener;
 
         // Отрисовка начального состояния

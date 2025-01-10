@@ -2,6 +2,7 @@ package org.example.game;
 
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import org.example.listener.ServerListener;
 
 
 /**
@@ -17,9 +18,11 @@ public class GameController {
     private long lastUpdateTime = System.currentTimeMillis();
     private boolean isGameOver = false;
     private int currentRow = 0;
+    private ServerListener serverListener;
 
-    public GameController(int[][] gameField) {
+    public GameController(int[][] gameField, ServerListener serverListener) {
         this.gameField = gameField;
+        this.serverListener = serverListener;
     }
 
     public void handleKeyPress(KeyEvent event) {
@@ -31,8 +34,10 @@ public class GameController {
 
 
         if (keyCode == KeyCode.LEFT) {
+            serverListener.sendMessage("MOVE_LEFT");
             newX--;
         } else if (keyCode == KeyCode.RIGHT) {
+            serverListener.sendMessage("MOVE_RIGHT");
             newX++;
         }
 
