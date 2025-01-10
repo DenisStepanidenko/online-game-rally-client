@@ -347,7 +347,12 @@ public class Client extends Application {
 
         });
 
-        root.getChildren().addAll(authLabel, usernameField, errorLabel, submitButton);
+        Button returnButton = new Button("Назад");
+        returnButton.setOnAction(e -> {
+            showStartWindow();
+        });
+
+        root.getChildren().addAll(authLabel, usernameField, errorLabel, submitButton, returnButton);
     }
 
     /**
@@ -377,7 +382,14 @@ public class Client extends Application {
 
         });
 
-        root.getChildren().addAll(authLabel, passwordField, errorLabel, submitButton);
+        Button returnButton = new Button("Назад");
+        returnButton.setOnAction(e -> {
+            resetUsername();
+            serverListener.sendMessage("RETURN_FROM_PASSWORD");
+            showUsernameWindow();
+        });
+
+        root.getChildren().addAll(authLabel, passwordField, errorLabel, submitButton, returnButton);
     }
 
     /**
